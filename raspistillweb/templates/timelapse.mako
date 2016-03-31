@@ -7,22 +7,23 @@
       <div class="col-md-12">
         <div class="alert alert-danger alert-dismissable">
           <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-          <strong>Timelapse in Progress.</strong> Please wait until the timelapse process has finished.          
+          <strong>Timelapse in Progress.</strong> Please wait until the timelapse process has finished.
+          <button type="button" class="btn btn-danger btn-sm" onclick="location.href='/timelapse_stop'">Stop Timelapse</button>
         </div>
       </div>
     % else:
     <div class="col-md-12">
       <div class="panel panel-default">
         <div class="panel-heading">
-            <h3 class="panel-title">Timelapse</h3>
+            <h3 class="panel-title">Time Lapse</h3>
           </div>
           <div class="panel-body">
             There is currently no timelapse in progress. You can start a timelapse with the folowing preferences or edit these settings on the <a href="/settings"><strong>settings page.</strong></a>
             <dl>
               <dt>Interval</dt>
-              <dd>${timelapseInterval}ms</dd>
-              <dt>Time</dt>
-              <dd>${timelapseTime}ms</dd>
+              <dd>${timelapseInterval} s</dd>
+              <dt>Duration</dt>
+              <dd>${timelapseTime} s</dd>
             </dl>
             <form method="post">
               <input type="button" class="btn btn-danger btn-lg" value="Start Timelapse" onclick="location.href='/timelapse_start'">
@@ -37,17 +38,23 @@
     <div class="col-xs-6 col-sm-4 col-md-3">
       <div class="panel panel-default">
         <div class="panel-heading">
-          <form action="delete_timelapse" method="POST">
-            <button type="submit" name="id" value="${file['id']}" class="close">&times;</button>
+          <form action="timelapse_delete" method="POST">
+            <button type="submit" name="id" value="${loop.index}" class="close">&times;</button>
           </form>
           <h3 class="panel-title">${file['timeStart']}</h3>
         </div>
         <div class="panel-body">
           <dl>
-            <dt>Image Effect</dt>
-            <dd>${file['image_effect']}</dd>
+            <dt>Number of Images</dt>
+            <dd>${file['n_images']}</dd>
+            <dt>Image Resolution</dt>
+            <dd>${file['resolution']}</dd>
+            <dt>Encoding Mode</dt>
+            <dd>${file['encoding_mode']}</dd>
             <dt>Exposure Mode</dt>
             <dd>${file['exposure_mode']}</dd>
+            <dt>Image Effect</dt>
+            <dd>${file['image_effect']}</dd>
             <dt>AWB Mode</dt>
             <dd>${file['awb_mode']}</dd>
             <dt>Start</dt>

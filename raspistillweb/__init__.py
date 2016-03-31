@@ -15,22 +15,13 @@
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 
 from pyramid.config import Configurator
-from sqlalchemy import engine_from_config
 
-from .models import (
-    DBSession,
-    Base,
-    )
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
-    engine = engine_from_config(settings, 'sqlalchemy.')
-    DBSession.configure(bind=engine)
-    Base.metadata.bind = engine
-    
     config = Configurator(settings=settings)
-    #config.include('pyramid_chameleon')
+    config.include('pyramid_chameleon')
     config.include('pyramid_mako')
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_static_view('pictures', 'pictures', cache_max_age=3600)
@@ -39,11 +30,14 @@ def main(global_config, **settings):
     config.add_route('home','/')
     config.add_route('settings','/settings')
     config.add_route('save','/save')
-    config.add_route('delete_picture','/delete_picture')
-    config.add_route('delete_timelapse','/delete_timelapse')
+    config.add_route('delete','/delete')
     config.add_route('archive','/archive')
     config.add_route('timelapse','/timelapse')
     config.add_route('photo','/photo')
     config.add_route('timelapse_start','/timelapse_start')
+    config.add_route('timelapse_stop','/timelapse_stop')
+    config.add_route('timelapse_delete','/timelapse_delete')
+    config.add_route('reboot','/reboot')
+    config.add_route('shutdown','/shutdown')
     config.scan()
     return config.make_wsgi_app()

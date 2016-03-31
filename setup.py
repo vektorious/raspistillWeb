@@ -10,18 +10,15 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 
 requires = [
     'pyramid',
+    'pyramid_chameleon',
     'pyramid_debugtoolbar',
     'waitress',
     'pyramid_mako', #new dependency
-    'exifread', #new dependency,
-    'pyramid_tm',#fordb
-    'SQLAlchemy',#fordb
-    'transaction',#fordb
-    'zope.sqlalchemy',#fordb
+    'exifread', #new dependency
     ]
 
 setup(name='raspistillWeb',
-      version='0.2',
+      version='0.1',
       description='raspistillWeb',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
@@ -43,7 +40,5 @@ setup(name='raspistillWeb',
       entry_points="""\
       [paste.app_factory]
       main = raspistillweb:main
-      [console_scripts]
-      initialize_raspistillweb_db = raspistillweb.scripts.initializedb:main
       """,
       )

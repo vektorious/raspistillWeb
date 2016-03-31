@@ -22,7 +22,7 @@
         <div class="navbar-collapse collapse" style="height: 1px;">
           <ul class="nav navbar-nav">
             <li><a href="/">Home</a></li>
-            <li class="active"><a href="/settings">Settings</a></li>
+            <li><a href="/settings">Settings</a></li>
             <li><a href="/archive">Archive</a></li>
             <li><a href="/timelapse">Time Lapse</a></li>
             <li class="dropdown">
