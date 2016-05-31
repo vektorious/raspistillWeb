@@ -26,11 +26,11 @@
             <li class="active"><a href="/archive">Archive</a></li>
             <li><a href="/timelapse">Time Lapse</a></li>
             <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-off" aria-label="Shutdown"></span> <span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                    <li><a href="/reboot"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Reboot</a></li>
-                    <li><a href="/shutdown"><span class="glyphicon glyphicon-off" aria-hidden="true"></span> Shutdown</a></li>
-                </ul>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-off" aria-label="Shutdown"></span> <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="/reboot"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Reboot</a></li>
+                <li><a href="/shutdown"><span class="glyphicon glyphicon-off" aria-hidden="true"></span> Shutdown</a></li>
+              </ul>
             </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">

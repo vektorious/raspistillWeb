@@ -4,6 +4,8 @@ Small Python web interface for raspistill to take photos with the RaspberryPi in
 
 ![alt text](https://raw.github.com/TimJuni/raspistillWeb/master/raspistillweb/pictures/preview.jpg "raspistillWeb preview")
 
+Important notice: this version of raspistillWeb is a fork of the original project by Tim Jungnickel (tim.jungnickel@gmail.com). This fork was created and is maintained by Massimo Minervini (minervini.massimo@gmail.com) with the purpose of adding features relevant to the Phenotiki project (http://phenotiki.com) for plant phenotyping applications.
+
 ## Requirements
 
 For a successful installation you need:
@@ -16,21 +18,25 @@ I'll provide a guide to install raspistillWeb based on the tutorial from the [py
 
 1. Make sure that your raspbian and your camera is working. Try to make a photo with raspistill to verify that your camera is working. 
 
-2. Install python2.7-dev (if not already on your system), virtualenv, setuptools and exif:
-  * `sudo apt-get install python2.7-dev python-virtualenv python-setuptools exif`
+2. Install python3-dev (if not already on your system), setuptools and exif and virtualenv via pip:
+  * `sudo apt-get install python3-dev python3-pip python3-setuptools exif`
+  * `sudo pip3 install virtualenv`
 
 3. Create a virtual environment for python (sudo not required and not recommended):
   * `mkdir ~/Development` (Or another directory)
   * `cd ~/Development`
-  * `virtualenv --no-site-packages env`
+  * `virtualenv --python=python3 env`
   * `cd env`
 
 4. Install raspistillWeb
   * `git clone https://github.com/TimJuni/raspistillWeb.git`
   * `cd raspistillWeb`
-  * `../bin/python setup.py develop`
+  * `../bin/python3 setup.py develop` (this may take some time)
 
-5. Run raspistillWeb
+5. Initialize the database
+  * `../bin/initialize_raspistillweb_db development.ini`
+
+6. Run raspistillWeb
   * `../bin/pserve development.ini`
   * surf `http://<adress of your pi>:6543`
 
@@ -102,7 +108,17 @@ If you want to use to raspistillWeb from the internet, you can set up an apache 
 When you surf `http://<adress of your pi>` you should be asked for a username (guest) and a password (see step 5). 
 
 ### Run raspistillWeb on startup
-TODO
+1. Create a startup script
+  * `sudo nano /etc/init.d/raspistillweb`
+```
+#!/bin/bash
+cd /home/pi/Development/env/raspistillWeb
+../bin/pserve development.ini
+``` 
+2. Make the script executable
+  `sudo chmod 755 /etc/init.d/raspistillweb`
+3. Register the script to be run at startup
+  `sudo update-rc.d /etc/init.d/raspistillweb defaults`
 
 ## Future Work
 This is my first project with python and pyramid. Feel free to leave a commend or a feature request.

@@ -37,10 +37,8 @@
             <dd>${imagedata['resolution']}</dd>
             <dt>Encoding Mode</dt>
             <dd>${imagedata['encoding_mode']}</dd>
-            ##<dt>ISO</dt>
-            ##<dd>${imagedata['ISO']}</dd>
-            ##<dt>Exposure Time</dt>
-            ##<dd>${imagedata['exposure_time']}</dd>
+            <dt>ISO</dt>
+            <dd>${imagedata['ISO']}</dd>
             <dt>Exposure Mode</dt>
             <dd>${imagedata['exposure_mode']}</dd>
             <dt>Image Effect</dt>
@@ -53,5 +51,3 @@
     </div>
   </div>  
 </div>
-  	
-
