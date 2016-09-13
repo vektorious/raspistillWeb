@@ -24,7 +24,7 @@ import threading
 import tarfile
 import zipfile
 from subprocess import call, Popen, PIPE 
-from time import gmtime, strftime, localtime, asctime, mktime#, sleep
+from time import gmtime, strftime, localtime, asctime, mktime, sleep
 from stat import *
 from datetime import *
 
@@ -37,6 +37,7 @@ from bqapi.util import save_blob
 from lxml import etree
 #from time import time
 from socket import gethostname
+import picamera
 
 from sqlalchemy.exc import DBAPIError
 import transaction
@@ -78,15 +79,16 @@ ISO_OPTIONS = [
     ]
 
 IMAGE_RESOLUTIONS = [
-    '800x600', '1024x768', '1280x720', '1920x1080', '2592x1944'
+    '800x600', '1024x768', '1280x720', '1920x1080', '2592x1944', '3280x2464'
     ]
 
 ENCODING_MODES = [
     'jpg', 'png', 'bmp', 'gif'
     ]
 
-IMAGE_HEIGHT_ALERT = 'Please enter an image height value between 0 and 1945.'
-IMAGE_WIDTH_ALERT = 'Please enter an image width value between 0 and 2592.'
+#TODO: check version of camera (v1 or v2)
+IMAGE_HEIGHT_ALERT = 'Please enter an image height value between 0 and 2464 (or 1944 for the v1 camera).'
+IMAGE_WIDTH_ALERT = 'Please enter an image width value between 0 and 3280 (or 2592 for the v1 camera).'
 IMAGE_EFFECT_ALERT = 'Please enter a valid image effect.'
 EXPOSURE_MODE_ALERT = 'Please enter a valid exposure mode.'
 ENCODING_MODE_ALERT = 'Please enter a valid encoding mode.'
@@ -457,6 +459,22 @@ def take_photo(filename):
         iso_call = ''
     else:
         iso_call = ' -ISO ' + str(app_settings.image_ISO)
+    
+    # ----- TEST CODE -----#
+    print PiCamera.AWB_MODES
+    with picamera.PiCamera() as camera:
+        camera.resolution = (app_settings.image_width,app_settings.image_height)
+        # Camera warm-up time
+        time.sleep(2)
+        camera.shutter_speed = camera.exposure_speed
+        camera.exposure_mode = app_settings.exposure_mode
+        camera.awb_mode = app_settings.awb_mode
+        camera.image_rotation = app_settings.image_rotation
+        camera.image_effect = app_settings.image_effect
+        camera.iso = 0 if app_settings.image_ISO == 'auto' else app_settings.image_ISO
+        camera.capture(RASPISTILL_DIRECTORY + filename + '_test', format=app_settings.encoding_mode)
+    # ----- TEST CODE -----#
+    
     call (
         ['raspistill -t 500'
         + ' -n '
@@ -513,6 +531,24 @@ def take_timelapse(filename):
         iso_call = ''
     else:
         iso_call = ' -ISO ' + str(app_settings.image_ISO)
+    
+    # ----- TEST CODE -----#
+    with picamera.PiCamera() as camera:
+        camera.resolution = (app_settings.image_width,app_settings.image_height)
+        # Camera warm-up time
+        time.sleep(2)
+        camera.shutter_speed = camera.exposure_speed
+        camera.exposure_mode = app_settings.exposure_mode
+        camera.awb_mode = app_settings.awb_mode
+        camera.image_rotation = app_settings.image_rotation
+        camera.image_effect = app_settings.image_effect
+        camera.iso = 0 if app_settings.image_ISO == 'auto' else app_settings.image_ISO
+        for filename in camera.capture_continuous(TIMELAPSE_DIRECTORY + filename + '/' + 'IMG_{timestamp:%Y-%m-%d_%H-%M-%S}.' + app_settings.encoding_mode, format=app_settings.encoding_mode):
+            print('Captured %s' % filename)
+            time.sleep(app_settings.timelapse_interval)
+        #camera.capture(RASPISTILL_DIRECTORY + filename + '_test', format=app_settings.encoding_mode)
+    # ----- TEST CODE -----#
+    
     try:
         print 'Starting time-lapse acquisition...'
         #TODO: rename images with timestamp

@@ -63,13 +63,13 @@
               <div class="col-md-4 col-lg-3 col-sm-4">
                 <div class="input-group">
                   <span class="input-group-addon"><span class="glyphicon glyphicon-resize-horizontal"></span></span>
-                  <input type="number" class="form-control" name="imageWidth" min="1" max="2592" placeholder="${image_width}" title="Set custom width (pixels).">
+                  <input type="number" class="form-control" name="imageWidth" min="1" max="3280" placeholder="${image_width}" title="Set custom width (pixels).">
                 </div>
               </div>
               <div class="col-md-4 col-lg-3 col-sm-4">
                 <div class="input-group">
                   <span class="input-group-addon"><span class="glyphicon glyphicon-resize-vertical"></span></span>
-                  <input type="number" class="form-control" name="imageHeight" min="1" max="1944" placeholder="${image_height}" title="Set custom height (pixels).">
+                  <input type="number" class="form-control" name="imageHeight" min="1" max="2464" placeholder="${image_height}" title="Set custom height (pixels).">
                 </div>                
               </div>
             </div>
