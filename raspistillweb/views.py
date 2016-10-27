@@ -461,18 +461,18 @@ def take_photo(filename):
         iso_call = ' -ISO ' + str(app_settings.image_ISO)
     
     # ----- TEST CODE -----#
-    print PiCamera.AWB_MODES
-    with picamera.PiCamera() as camera:
-        camera.resolution = (app_settings.image_width,app_settings.image_height)
-        # Camera warm-up time
-        time.sleep(2)
-        camera.shutter_speed = camera.exposure_speed
-        camera.exposure_mode = app_settings.exposure_mode
-        camera.awb_mode = app_settings.awb_mode
-        camera.image_rotation = app_settings.image_rotation
-        camera.image_effect = app_settings.image_effect
-        camera.iso = 0 if app_settings.image_ISO == 'auto' else app_settings.image_ISO
-        camera.capture(RASPISTILL_DIRECTORY + filename + '_test', format=app_settings.encoding_mode)
+    #print PiCamera.AWB_MODES
+    #with picamera.PiCamera() as camera:
+    #    camera.resolution = (app_settings.image_width,app_settings.image_height)
+    #    # Camera warm-up time
+    #    time.sleep(2)
+    #    camera.shutter_speed = camera.exposure_speed
+    #    camera.exposure_mode = app_settings.exposure_mode
+    #    camera.awb_mode = app_settings.awb_mode
+    #    camera.image_rotation = app_settings.image_rotation
+    #    camera.image_effect = app_settings.image_effect
+    #    camera.iso = 0 if app_settings.image_ISO == 'auto' else app_settings.image_ISO
+    #    camera.capture(RASPISTILL_DIRECTORY + filename + '_test', format=app_settings.encoding_mode)
     # ----- TEST CODE -----#
     
     call (
@@ -533,20 +533,20 @@ def take_timelapse(filename):
         iso_call = ' -ISO ' + str(app_settings.image_ISO)
     
     # ----- TEST CODE -----#
-    with picamera.PiCamera() as camera:
-        camera.resolution = (app_settings.image_width,app_settings.image_height)
-        # Camera warm-up time
-        time.sleep(2)
-        camera.shutter_speed = camera.exposure_speed
-        camera.exposure_mode = app_settings.exposure_mode
-        camera.awb_mode = app_settings.awb_mode
-        camera.image_rotation = app_settings.image_rotation
-        camera.image_effect = app_settings.image_effect
-        camera.iso = 0 if app_settings.image_ISO == 'auto' else app_settings.image_ISO
-        for filename in camera.capture_continuous(TIMELAPSE_DIRECTORY + filename + '/' + 'IMG_{timestamp:%Y-%m-%d_%H-%M-%S}.' + app_settings.encoding_mode, format=app_settings.encoding_mode):
-            print('Captured %s' % filename)
-            time.sleep(app_settings.timelapse_interval)
-        #camera.capture(RASPISTILL_DIRECTORY + filename + '_test', format=app_settings.encoding_mode)
+    #with picamera.PiCamera() as camera:
+    #    camera.resolution = (app_settings.image_width,app_settings.image_height)
+    #    # Camera warm-up time
+    #    time.sleep(2)
+    #    camera.shutter_speed = camera.exposure_speed
+    #    camera.exposure_mode = app_settings.exposure_mode
+    #    camera.awb_mode = app_settings.awb_mode
+    #    camera.image_rotation = app_settings.image_rotation
+    #    camera.image_effect = app_settings.image_effect
+    #    camera.iso = 0 if app_settings.image_ISO == 'auto' else app_settings.image_ISO
+    #    for filename in camera.capture_continuous(TIMELAPSE_DIRECTORY + filename + '/' + 'IMG_{timestamp:%Y-%m-%d_%H-%M-%S}.' + app_settings.encoding_mode, format=app_settings.encoding_mode):
+    #        print('Captured %s' % filename)
+    #        time.sleep(app_settings.timelapse_interval)
+    #    #camera.capture(RASPISTILL_DIRECTORY + filename + '_test', format=app_settings.encoding_mode)
     # ----- TEST CODE -----#
     
     try:
