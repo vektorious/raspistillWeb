@@ -169,6 +169,44 @@
               </div>  
             </div>
             
+            <div class="form-group">
+              <label for="NumberImages1" class="col-lg-2 control-label">Number of shots</label>
+              <div class="col-lg-10">
+                <div class="input-group">
+                  <input type="number" class="form-control" id="NumberImages1" name="numberImages" min="1" value="${number_images}" title="Number of pictures to acquire">
+                  <span class="input-group-addon">shots</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="CommandBeforeAcquisition1" class="col-lg-2 control-label">Command before acquisition</label>
+              <div class="col-lg-10">
+                <input type="text" class="form-control" id="CommandBeforeAcquisition1" name="commandBeforeAcquisition" value="${command_before_sequence}">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="CommandAfterAcquisition1" class="col-lg-2 control-label">Command after acquisition</label>
+              <div class="col-lg-10">
+                <input type="text" class="form-control" id="CommandAfterAcquisition1" name="commandAfterAcquisition" value="${command_after_sequence}">
+              </div>
+            </div>
+            
+             <div class="form-group">
+              <label for="CommandBeforeShot1" class="col-lg-2 control-label">Command before shot</label>
+              <div class="col-lg-10">
+                <input type="text" class="form-control" id="CommandBeforeShot1" name="commandBeforeShot" value="${command_before_shot}">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="CommandAfterShot1" class="col-lg-2 control-label">Command after shot</label>
+              <div class="col-lg-10">
+                <input type="text" class="form-control" id="CommandAfterShot1" name="commandAfterShot" value="${command_after_shot}">
+              </div>
+            </div>
+            
             <span class="help-block">Timelapse preferences:</span>
             
       	    <div class="form-group">
@@ -176,7 +214,7 @@
               <div class="col-lg-10">
                 <div class="input-group">
                   <input type="number" class="form-control" id="TimelapseInterval1" name="timelapseInterval" min="1" value="${timelapse_interval}" title="Time (seconds) between image acquisitions.">
-                  <span class="input-group-addon">sec</span>
+                  <span class="input-group-addon">secs</span>
                 </div>
                 <!--<input type="number" class="form-control" id="TimelapseInterval1" name="timelapseInterval" placeholder="${timelapse_interval}">-->
               </div>
@@ -187,7 +225,7 @@
               <div class="col-lg-10">
                 <div class="input-group">
                   <input type="number" class="form-control" id="TimelapseTime1" name="timelapseTime" min="1" value="${timelapse_time}" title="Total duration (seconds) of the time-lapse acquisition.">
-                  <span class="input-group-addon">sec</span>
+                  <span class="input-group-addon">secs</span>
                 </div>
                 <!--<input type="number" class="form-control" id="TimelapseTime1" name="timelapseTime" placeholder="${timelapse_time}">-->
               </div>
@@ -243,7 +281,50 @@
                 </div>
               </div>  
             </div>
+
+	    <span class="help-block"><h4>Google Drive preferences:</h4></span>
             
+            <div class="form-group">
+              <label for="gdriveEnabled1" class="col-lg-2 control-label">Gdrive Upload</label>
+              <div class="col-lg-10">
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-default ${'active' if gdrive_enabled == 'Yes' else ''}" title="Transmit acquired images to Google Drive.">
+                    <input type="radio" name="gdriveEnabled" value="Yes" ${'checked' if gdrive_enabled == 'Yes' else ''}> Yes
+                  </label>
+                  <label class="btn btn-default ${'active' if gdrive_enabled == 'No' else ''}" title="Acquired images are not transmitted to Google Drive.">
+                    <input type="radio" name="gdriveEnabled" value="No" ${'checked' if gdrive_enabled == 'No' else ''}> No
+                  </label>
+                </div>
+              </div>  
+            </div>
+        
+       <span class="help-block">Go to <a href="http://console.developers.google.com" target="_blank">Google Developer Console</a> to get your Client ID and Secret Token.</span>
+	   
+	   <div class="form-group">
+              <label for="GdriveFolder1" class="col-lg-2 control-label">Google Drive Upload Folder</label>
+              <div class="col-lg-10">
+                <input type="text" class="form-control" id="GdriveFolder1" name="gdriveFolder" value="${gdrive_folder}">
+              </div>
+           </div>
+
+           <div class="form-group">
+              <label for="GdriveUser1" class="col-lg-2 control-label">Google Drive Client ID</label>
+              <div class="col-lg-10">
+                <input type="text" class="form-control" id="GdriveUser1" name="gdriveUser" value="${gdrive_user}">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="GdriveSecret1" class="col-lg-2 control-label">Google Drive Secret Token</label>
+              <div class="col-lg-10">
+                <input type="text" class="form-control" id="GdriveSecret1" name="gdriveSecret" value="${gdrive_secret}">
+              </div>
+            </div>
+
+
+
+
+
             <div class="form-group">
               <div class="col-lg-offset-2 col-lg-10">
                 <button type="submit" formmethod="POST" class="btn btn-primary">Save</button>

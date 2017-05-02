@@ -16,6 +16,7 @@
 
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
+from pyramid.response import Response, FileResponse
 #import exifread
 import os
 import shutil
@@ -23,10 +24,13 @@ import signal
 import threading
 import tarfile
 import zipfile
+import fileinput
 from subprocess import call, Popen, PIPE 
 from time import gmtime, strftime, localtime, asctime, mktime, sleep
 from stat import *
 from datetime import *
+
+
 
 #import Image
 from PIL import Image
@@ -38,6 +42,9 @@ from lxml import etree
 #from time import time
 from socket import gethostname
 import picamera
+
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 from sqlalchemy.exc import DBAPIError
 import transaction
@@ -52,9 +59,11 @@ from .models import (
 # Modify these lines to change the directory where the pictures and thumbnails
 # are stored. Make sure that the directories exist and the user who runs this
 # program has write access to the directories. 
+RASPISTILL_ROOT = 'raspistillweb'
 RASPISTILL_DIRECTORY = 'raspistillweb/pictures/' # Example: /home/pi/pics/
 THUMBNAIL_DIRECTORY = 'raspistillweb/thumbnails/' # Example: /home/pi/thumbs/
 TIMELAPSE_DIRECTORY = 'raspistillweb/time-lapse/' # Example: /home/pi/timelapse/
+TIMESTAMP = '%Y-%m-%d_%H-%M-%S'
 
 IMAGE_EFFECTS = [
     'none', 'negative', 'solarise', 'sketch', 'denoise', 'emboss', 'oilpaint', 
@@ -98,6 +107,10 @@ IMAGE_ROTATION_ALERT = 'Please enter a valid image rotation option.'
 BISQUE_USER_ALERT = 'Please enter a valid BisQue username.'
 BISQUE_PSWD_ALERT = 'Please enter a valid BisQue password.'
 BISQUE_ROOT_URL_ALERT = 'Please enter a valid BisQue root URL.'
+GDRIVE_ALERT = 'Something went wrong uploading to Google Drive'
+GDRIVE_FOLDER_ALERT = 'Something went wrong uploading to your Google Drive folder. Make sure there are no special characters in the folder name.'
+GDRIVE_USER_ALERT = 'Please enter a valid Google Drive client ID'
+GDRIVE_SECRET_ALERT = 'Please enter a valid Google Drive Secret token'
 
 #THUMBNAIL_SIZE = '240:160:80'
 THUMBNAIL_SIZE = 240, 160
@@ -164,8 +177,17 @@ def settings_view(request):
             'bisque_pswd' : str(app_settings.bisque_pswd),
             'bisque_root_url' : str(app_settings.bisque_root_url),
             'bisque_local_copy' : str(app_settings.bisque_local_copy),
+            'gdrive_enabled' : str(app_settings.gdrive_enabled),
+            'gdrive_folder' : str(app_settings.gdrive_folder),
+            'gdrive_user' : str(app_settings.gdrive_user),
+            'gdrive_secret' : str(app_settings.gdrive_secret),
             'preferences_fail_alert' : preferences_fail_alert_temp,
-            'preferences_success_alert' : preferences_success_alert_temp
+            'preferences_success_alert' : preferences_success_alert_temp,
+            'number_images' :  str(app_settings.number_images),
+            'command_before_shot': str(app_settings.command_before_shot),
+            'command_after_shot': str(app_settings.command_after_shot),
+            'command_before_sequence': str(app_settings.command_before_sequence),
+            'command_after_sequence': str(app_settings.command_after_sequence)
             } 
 
 # View for the /archive site
@@ -230,7 +252,7 @@ def timelapse_view(request):
 def timelapse_start_view(request):
     global timelapse
     timelapse = True
-    filename = strftime("%Y-%m-%d_%H-%M-%S", localtime())
+    filename = strftime(TIMESTAMP, localtime())
     t = threading.Thread(target=take_timelapse, args=(filename, ))
     t.start()
     return HTTPFound(location='/timelapse') 
@@ -244,14 +266,36 @@ def timelapse_stop_view(request):
     timelapse = False
     return HTTPFound(location='/timelapse')
 
+@view_config(route_name='timelapse_upload_gdrive')
+def timelapse_upload_gdrive_view(request):
+    app_settings = DBSession.query(Settings).first()
+    t_id = request.params['id']
+    tl = DBSession.query(Timelapse).filter_by(id=int(t_id)).first()
+    gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()
+    drive = GoogleDrive(gauth)
+    file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+    for upload_folder in file_list:
+        if upload_folder['title'] == app_settings.gdrive_folder:
+            upload_folder_id = upload_folder['id']
+    upfile = drive.CreateFile({'title': tl.filename, 'mimeType':'application/zip',
+                                   "parents": [{"kind": "drive#fileLink", "id": upload_folder_id}]})
+    upfile.SetContentFile(TIMELAPSE_DIRECTORY + tl.filename + '.zip')
+    upfile.Upload()
+
+    
+
+    return HTTPFound(location='/timelapse')
+
+
 # View to take a photo - no site will be generated
 @view_config(route_name='photo')
-def photo_view(request):
+def photo_view(request,ret=False):
     if timelapse:
         return HTTPFound(location='/') 
     else:
         app_settings = DBSession.query(Settings).first()
-        basename = strftime("IMG_%Y-%m-%d_%H-%M-%S", localtime())
+        basename = strftime("IMG_"+TIMESTAMP, localtime())
         filename = basename + '.' + app_settings.encoding_mode
         take_photo(filename)
         
@@ -300,7 +344,12 @@ def photo_view(request):
         #if bisque_enabled == "Yes" and bisque_local_copy == "No":
         #    print 'Deleting local copy of \'' + filename + '\''
         #    os.remove(RASPISTILL_DIRECTORY + filename)
-        return HTTPFound(location='/')  
+        
+        if (not ret):
+            return HTTPFound(location='/')
+        else:
+            return filename;
+                
 
 # View for the archive delete - no site will be generated
 @view_config(route_name='delete_picture')
@@ -308,8 +357,13 @@ def pic_delete_view(request):
     p_id = request.params['id']
     pic = DBSession.query(Picture).filter_by(id=int(p_id)).first()
     print('Deleting picture and thumbnail...')
-    os.remove(RASPISTILL_DIRECTORY + '/' + pic.filename)
-    os.remove(THUMBNAIL_DIRECTORY + '/' + pic.filename)
+    
+    if os.path.isfile(RASPISTILL_DIRECTORY + pic.filename):
+        os.remove(RASPISTILL_DIRECTORY + pic.filename)
+    
+    if os.path.isfile(THUMBNAIL_DIRECTORY + pic.filename):
+        os.remove(THUMBNAIL_DIRECTORY + pic.filename)
+        
     DBSession.delete(pic)
     return HTTPFound(location='/archive')
 
@@ -319,8 +373,16 @@ def tl_delete_view(request):
     t_id = request.params['id']
     tl = DBSession.query(Timelapse).filter_by(id=int(t_id)).first()
     print 'Deleting time-lapse directory and archive...'
-    shutil.rmtree(TIMELAPSE_DIRECTORY + tl.filename)
-    os.remove(TIMELAPSE_DIRECTORY + tl.filename + '.zip')
+    try:
+        shutil.rmtree(TIMELAPSE_DIRECTORY + tl.filename)
+    except:
+        print "Folder "+tl.filename+" not found"
+    
+    try:    
+        os.remove(TIMELAPSE_DIRECTORY + tl.filename + '.zip')
+    except:
+        print "File "+tl.filename + ".zip not found"
+        
     #os.remove(TIMELAPSE_DIRECTORY + timelapse_database[int(request.params['id'])]['filename'] + '.tar.gz')
     #shutil.rmtree(TIMELAPSE_DIRECTORY + timelapse_database[int(request.params['id'])]['filename'])
     DBSession.delete(tl)
@@ -347,6 +409,17 @@ def save_view(request):
     bisque_pswd_temp = request.params['bisquePswd']
     bisque_root_url_temp = request.params['bisqueRootUrl']
     bisque_local_copy_temp = request.params['bisqueLocalCopy']
+    gdrive_enabled_temp = request.params['gdriveEnabled']
+    gdrive_folder_temp = request.params['gdriveFolder']
+    gdrive_user_temp = request.params['gdriveUser']
+    gdrive_secret_temp = request.params['gdriveSecret']
+    number_shots_temp = request.params['numberImages']
+    command_before_sequence_temp = request.params['commandBeforeAcquisition']
+    command_after_sequence_temp = request.params['commandAfterAcquisition']
+    command_before_shot_temp = request.params['commandBeforeShot']
+    command_after_shot_temp = request.params['commandAfterShot']
+
+    
 
     app_settings = DBSession.query(Settings).first()
     
@@ -365,6 +438,21 @@ def save_view(request):
     if not image_width_temp and not image_height_temp:
         app_settings.image_width = image_resolution.split('x')[0]
         app_settings.image_height = image_resolution.split('x')[1]
+        
+    if number_shots_temp:
+        app_settings.number_images = int(number_shots_temp)
+    
+    #if command_before_sequence_temp:
+    app_settings.command_before_sequence = command_before_sequence_temp
+        
+    #if command_after_sequence_temp:
+    app_settings.command_after_sequence = command_after_sequence_temp
+        
+    #if command_before_shot_temp:
+    app_settings.command_before_shot = command_before_shot_temp
+        
+    #if command_after_shot_temp:
+    app_settings.command_after_shot = command_after_shot_temp
             
     if timelapse_interval_temp:
         app_settings.timelapse_interval = int(timelapse_interval_temp)
@@ -419,7 +507,55 @@ def save_view(request):
                 preferences_fail_alert.append(BISQUE_ROOT_URL_ALERT)
         if bisque_local_copy_temp and bisque_local_copy_temp in ['Yes','No']:
             app_settings.bisque_local_copy = bisque_local_copy_temp
-    
+
+    if gdrive_enabled_temp:
+        app_settings.gdrive_enabled = gdrive_enabled_temp
+        gmail_enabled = app_settings.gdrive_enabled == "Yes"
+        
+        
+        if gdrive_folder_temp:
+            app_settings.gdrive_folder = gdrive_folder_temp
+        elif gmail_enabled:
+            preferences_fail_alert.append(GDRIVE_FOLDER_ALERT)
+            
+        if gdrive_user_temp:
+            app_settings.gdrive_user = gdrive_user_temp
+        elif gmail_enabled:
+            preferences_fail_alert.append(GDRIVE_USER_ALERT)
+        
+        if gdrive_secret_temp:
+            app_settings.gdrive_secret = gdrive_secret_temp
+        elif gmail_enabled:
+            preferences_fail_alert.append(GDRIVE_SECRET_ALERT)
+                
+        if gmail_enabled:
+
+            with open(RASPISTILL_ROOT+'/settings.template.yaml', 'r') as gdrive_setting_file:
+                gdrive_settings_data = gdrive_setting_file.read()
+
+            gdrive_settings_data = gdrive_settings_data.replace('clienttext', gdrive_user_temp)
+            gdrive_settings_data = gdrive_settings_data.replace('secrettext', gdrive_secret_temp)
+                            
+            with open('settings.yaml', 'w') as gdrive_setting_file:
+                gdrive_setting_file.write(gdrive_settings_data)
+
+            gauth = GoogleAuth()
+            gauth.LocalWebserverAuth()
+            drive = GoogleDrive(gauth)
+            folder_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+            new_folder_data = {'title' : app_settings.gdrive_folder, 'mimeType' : 'application/vnd.google-apps.folder'}
+            upload_folder_exists = 0
+            for upload_folder in folder_list:
+                if upload_folder['title'] == app_settings.gdrive_folder:
+                    upload_folder_id = upload_folder['id']
+                    upload_folder_exists = 1
+            if upload_folder_exists == 0:
+                #new_folder_data = {'title' : app_settings.gdrive_folder, 'mimeType' : 'application/vnd.google-apps.folder'}
+                new_folder = drive.CreateFile(new_folder_data)
+                new_folder.Upload()
+                upload_folder_id = new_folder['id']
+
+                
     if preferences_fail_alert == []:
         preferences_success_alert = True 
     
@@ -445,6 +581,13 @@ def shutdown_view(request):
     return {'project': 'raspistillWeb',
             'hostName' : host_name,
             }
+            
+@view_config(route_name='external_photo')
+def external_photo_view(request):
+    filename = photo_view(request,True)
+    r = FileResponse(RASPISTILL_DIRECTORY+filename)
+    r.headers.add('Content-disposition','attachment; filename="'+str(filename)+'"')
+    return r
 
 
 ###############################################################################
@@ -452,7 +595,7 @@ def shutdown_view(request):
 ###############################################################################
 
 
-def take_photo(filename):
+def take_photo(filename,bypassUploads=False):
     app_settings = DBSession.query(Settings).first()
     
     if app_settings.image_ISO == 'auto':
@@ -475,6 +618,8 @@ def take_photo(filename):
     #    camera.capture(RASPISTILL_DIRECTORY + filename + '_test', format=app_settings.encoding_mode)
     # ----- TEST CODE -----#
     
+    run_shell_command(app_settings.command_before_sequence)
+    
     call (
         ['raspistill -t 500'
         + ' -n '
@@ -489,6 +634,9 @@ def take_photo(filename):
         + ' -o ' + RASPISTILL_DIRECTORY + filename],
         stdout=PIPE, shell=True
         )
+    
+    run_shell_command(app_settings.command_after_sequence)
+    
 #    if not (RASPISTILL_DIRECTORY == 'raspistillweb/pictures/'):
 #        call (
 #            ['ln -s ' + RASPISTILL_DIRECTORY + filename
@@ -496,7 +644,7 @@ def take_photo(filename):
 #            )
     #generate_thumbnail(filename)
     
-    if app_settings.bisque_enabled == 'Yes':
+    if (app_settings.bisque_enabled == 'Yes') and not bypassUploads:
         resource = etree.Element('image', name=filename)
         etree.SubElement(resource, 'tag', name="experiment", value="Phenotiki")
         etree.SubElement(resource, 'tag', name="timestamp", value=os.path.splitext(filename)[0])
@@ -512,7 +660,20 @@ def take_photo(filename):
             print 'Image uploaded in %.2f seconds' % elapsed_time
             print r.items()
             print 'Image URI:', r.get('uri')
-    
+
+    if (app_settings.gdrive_enabled == 'Yes') and not bypassUploads:
+        gauth = GoogleAuth()
+        gauth.LocalWebserverAuth()
+        drive = GoogleDrive(gauth)
+        file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+        for upload_folder in file_list:
+            if upload_folder['title'] == app_settings.gdrive_folder:
+                upload_folder_id = upload_folder['id']
+        upfile = drive.CreateFile({'title': filename, 'mimeType':'image/png',
+                                   "parents": [{"kind": "drive#fileLink", "id": upload_folder_id}]})
+        upfile.SetContentFile(RASPISTILL_DIRECTORY +filename)
+        upfile.Upload()
+        
 
     #call(['cp raspistillweb/pictures/preview.jpg raspistillweb/pictures/'+filename],shell=True)
     #generate_thumbnail(filename)
@@ -552,6 +713,7 @@ def take_timelapse(filename):
     try:
         print 'Starting time-lapse acquisition...'
         #TODO: rename images with timestamp
+        #run_shell_command(app_settings.command_before_sequence)
         p_timelapse = Popen(
             ['raspistill '
             + ' -n '
@@ -570,6 +732,7 @@ def take_timelapse(filename):
             stdout=PIPE, shell=True, preexec_fn=os.setsid
             )
         p_timelapse.wait()
+        #run_shell_command(app_settings.command_after_sequence)
         print 'Finished time-lapse acquisition.'
     except:
         #p_timelapse.kill()
@@ -666,6 +829,13 @@ def get_picture_data(picture):
     imagedata['timestamp'] = str(picture.timestamp)
     imagedata['filesize'] = str(picture.filesize)
     return imagedata
+
+def run_shell_command(command=""):
+    if command:
+        p_command = Popen(command,shell=True,stdout=PIPE)
+        p_command.wait()
+        print p_command.stdout.read()
+        print "Command executed with exit code %d" % p_command.returncode
 
 def get_timelapse_data(timelapse_rec):
     timelapse_data = dict()

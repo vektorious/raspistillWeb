@@ -62,12 +62,21 @@ def main(argv=sys.argv):
                         awb_mode = 'auto',
                         image_ISO = 'auto',
                         image_rotation = '180',
-                        encoding_mode = 'jpg',
+                        encoding_mode = 'png',
                         bisque_enabled = 'No',
                         bisque_user = '',
                         bisque_pswd = '',
                         bisque_root_url = 'http://bisque.iplantcollaborative.org',
-                        bisque_local_copy = 'Yes'
+                        bisque_local_copy = 'Yes',
+                        gdrive_enabled = 'No',
+                        gdrive_folder = '',
+                        gdrive_user = '',
+                        gdrive_secret= '',
+                        number_images = 1,
+                        command_before_sequence = '',
+                        command_after_sequence = '',
+                        command_before_shot = '',
+                        command_after_shot = ''
                         )
         DBSession.add(app_settings)
 
