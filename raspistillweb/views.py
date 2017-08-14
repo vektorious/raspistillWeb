@@ -41,7 +41,7 @@ from bqapi.util import save_blob
 from lxml import etree
 #from time import time
 from socket import gethostname
-import picamera
+#import picamera
 
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -313,8 +313,9 @@ def photo_view(request,ret=False):
         im = Image.open(RASPISTILL_DIRECTORY + filename)
         width, height = im.size
         filedata['resolution'] = str(width) + ' x ' + str(height)
-        im.thumbnail(THUMBNAIL_SIZE)
-        im.save(THUMBNAIL_DIRECTORY + basename + '.jpg', 'JPEG', quality=THUMBNAIL_JPEG_QUALITY, optimize=True, progressive=True)
+        im.thumbnail(THUMBNAIL_SIZE);
+	im.mode='RGB'
+        im.save(THUMBNAIL_DIRECTORY + basename + '.' + app_settings.encoding_mode, quality=THUMBNAIL_JPEG_QUALITY, optimize=True, progressive=True)
         '''
         imagedata = dict()
         imagedata['filename'] = filename
