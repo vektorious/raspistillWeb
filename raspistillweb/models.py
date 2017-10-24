@@ -50,6 +50,15 @@ class Settings(Base):
     bisque_pswd = Column(Text)
     bisque_root_url = Column(Text)
     bisque_local_copy = Column(Text)
+    gdrive_enabled = Column(Text)
+    gdrive_folder = Column(Text)
+    gdrive_user = Column(Text)
+    gdrive_secret = Column(Text)
+    number_images = Column(Integer)
+    command_before_sequence = Column(Text)
+    command_after_sequence = Column(Text)
+    command_before_shot = Column(Text)
+    command_after_shot = Column(Text)
 
 class Timelapse(Base):
     __tablename__ = 'timelapse'

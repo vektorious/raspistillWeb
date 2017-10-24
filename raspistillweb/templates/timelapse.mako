@@ -45,6 +45,9 @@
           <form action="delete_timelapse" method="POST">
             <button type="submit" name="id" value="${file['id']}" class="close">&times;</button>
           </form>
+	  <form action="timelapse_upload_gdrive" method="POST">
+            <button type="submit" name="id" value="${file['id']}" onclick="location.href='/timelapse_upload_gdrive'" <span class="glyphicon glyphicon-open" aria-hidden="true"></span></button>
+          </form>
           <h3 class="panel-title">${file['timeStart']}</h3>
         </div>
         <div class="panel-body">
